@@ -16,10 +16,16 @@ const Node = require('./Node');
 
 // HashMap Class Constructor()
 class HashMap {
-    // Constructor initializes a hash map with a specified size (default is 0).
-    constructor(size = 0) {
+    // Constructor initializes a hash map with an initial size (default is 8) and a load factor (default is 0.75).
+    constructor(initialSize = 8, loadFactor = 0.75) {
+        // Number of key-value pairs in the hash map.
+        this.size = 0;
+        // Current capacity of the hash map's internal array.
+        this.capacity = initialSize;
+        // Load factor threshold that triggers resizing when exceeded.
+        this.loadFactor = loadFactor;
         // The 'hashmap' property is an array of linked lists, each initialized as an empty linked list.
-        this.hashmap = new Array(size)
+        this.hashmap = new Array(initialSize)
             .fill(null)
             .map(() => new LinkedList())
     }
@@ -31,39 +37,50 @@ class HashMap {
         let hashCode = 0;
         // for each character in the key
         for (let i = 0; i < key.length; i++) {
-            // adds the sum of the current character code value and hashCode to hashCode
-            hashCode = (hashCode * 31) + key.charCodeAt(i);
+            // Multiply the current hash code by 31, a prime number often used in hash functions.
+            // Add the current character code value of the key to the hash code.
+            // Apply modular arithmetic to keep the hash code within the bounds of the hash map's capacity.
+            hashCode = (hashCode * 31 + key.charCodeAt(i)) % this.capacity;
         }
-        // using modular arithmetic to return the remainder of dividing hashCode by the length of the hash map.
-        return hashCode % this.hashmap.length;
+        return hashCode;
     }
 
     //.assign() method:
     // Stores a key-value pair at a particular index in the hash map.
     assign(key, value) {
-        // Calculates the array index using the hash function.
+        // If key or value is invalid.
+        if (!key || !value) {
+            throw new Error('Invalid Key or Value');
+        }
+        // Calculate the array index using the hash function.
         const arrayIndex = this.hash(key);
-        // Retrieves the linked list at the calculated index.
+        // Retrieve the linked list at the calculated index.
         const linkedList = this.hashmap[arrayIndex];
-        // If the linked list is empty, adds the key-value pair to the head
+        
+        // If the linked list is empty, 
         if (!linkedList.head) {
+            // add the key-value pair to the head.
             linkedList.addToHead({ key, value });
+            // increment the size;
+            this.size++;
+            // call .checkLoadFactor()
+            this.checkLoadFactor();
             return;
         }
-        // If the linked list is not empty, iterates through it to find the key
+        // The list is not empty iterate through the linked list for possible existing key.
         let node = linkedList.head;
         while (node) {
-            // If the key is found, updates the value.
             if (node.data.key === key) {
                 node.data = { key, value };
-                break;
+                return;
             }
-            // If the end of the linked list is reached, adds a new node with the key-value pair.
+            // if there is no existing key 
             if (!node.getNextNode()) {
                 node.setNextNode(new Node({ key, value }));
-                break;
+                this.size++;
+                this.checkLoadFactor();
+                return;
             }
-            // Otherwise moves to the next node in the linked list.
             node = node.getNextNode();
         }
     }
@@ -88,6 +105,34 @@ class HashMap {
         return null;
     }
 
+    //.checkLoadFactor() method:
+    // Checks if the load factor exceeds the threshold, triggering a resize if needed.
+    checkLoadFactor() {
+        if (this.size / this.capacity > this.loadFactor) {
+            this.resize();
+        }
+    }
+
+    //.resize() method:
+    // Resizes the hash map by doubling its capacity and rehashing existing elements.
+    resize() {
+        const newCapacity = this.capacity * 2;
+        this.capacity = newCapacity;
+        const newHashmap = new Array(newCapacity).fill(null).map(() => new LinkedList());
+        // Rehash existing elements and add them to the new linked lists.
+        this.hashmap.forEach(linkedList => {
+            let node = linkedList.head;
+            while (node) {
+                const newHash = this.hash(node.data.key);
+                newHashmap[newHash].addToHead(node.data)
+                node = node.getNextNode();
+            }
+        })
+        // Update the hash map with the resized array of linked lists.
+        this.hashmap = newHashmap;
+    }
+
+
     printHashMap() {
         console.log('HashMap Contents:');
         this.hashmap.forEach((linkedList, index) => {
@@ -96,5 +141,6 @@ class HashMap {
         });
     }
 }
+
 
 module.exports = HashMap;
