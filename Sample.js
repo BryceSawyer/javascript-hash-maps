@@ -1,6 +1,6 @@
 const HashMap = require('./HashMap');
 
-const hashMap = new HashMap(10);
+const hashMap = new HashMap();
 
 // Assigned
 hashMap.assign('JavaScript', 'a high-level, interpreted programming language');
@@ -32,4 +32,7 @@ console.log(hashMap.retrieve('JavaScript'))
 console.log(hashMap.retrieve('Node.js'))
 console.log(hashMap.retrieve('Python'))
 console.log(hashMap.retrieve('React'))
-
+console.log(hashMap.retrieve('Cybersecurity'))
+console.log(hashMap.retrieve('Artificial Intelligence'))
+console.log(hashMap.retrieve('Linux'))
+console.log(hashMap.retrieve('Git'))
